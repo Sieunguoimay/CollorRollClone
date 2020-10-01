@@ -1,0 +1,2 @@
+C:\Vuduydu\CodingSpace\NoPowerUp\ColorRollClone\obj\Debug\Assembly-CSharp.csprojAssemblyReference.cache
+C:\Vuduydu\CodingSpace\NoPowerUp\ColorRollClone\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cache
