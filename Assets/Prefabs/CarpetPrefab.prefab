@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7221399740270129080}
   - component: {fileID: 7221399740270129081}
   - component: {fileID: -6156928171983827764}
+  - component: {fileID: -7986287170954539399}
   m_Layer: 0
   m_Name: CarpetPrefab
   m_TagString: Untagged
@@ -95,6 +96,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d84239a1b0f9684aba27f4fc22f5d2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  carpetSO: {fileID: 11400000, guid: ad79b3ee6addf1a4995d9fb3aedbe416, type: 2}
   shouldRebuild: 0
   vertices2D:
   - {x: -0.5, y: 0}
@@ -106,6 +108,18 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: -6156928171983827764}
         m_TargetAssemblyTypeName: CarpetRoller, Assembly-CSharp
+        m_MethodName: OnCarpetMeshRebuilt
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: -7986287170954539399}
+        m_TargetAssemblyTypeName: CarpetEditor, Assembly-CSharp
         m_MethodName: OnCarpetMeshRebuilt
         m_Mode: 0
         m_Arguments:
@@ -128,3 +142,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e5d5ccc06a902641b5ee4285bef0f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  shouldRoll: 0
+--- !u!114 &-7986287170954539399
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7221399740270129086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ee3111b3027f524b92d8b9e6c5d5f75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  polygonVertexPrefab: {fileID: 5550054794714832561, guid: d8d024cd960f69f4ebb060c969664d4b, type: 3}
+  PolygonVertices: []

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Http.Headers;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -19,10 +21,14 @@ public class CarpetMeshCreator : MonoBehaviour
     private MeshRenderer meshRenderer;
     private MeshFilter meshFilter;
 
+    public CarpetSO carpetSO;
     [SerializeField] bool shouldRebuild = false;
-    public Vector2[] vertices2D;
+
+    //public Vector2[] vertices2D;
 
     public MeshRebuiltEvent MeshRebuiltCallback = null;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -46,6 +52,8 @@ public class CarpetMeshCreator : MonoBehaviour
 
     private void rebuildMesh(bool shouldTriggerEvent = true)
     {
+
+        meshRenderer.material.SetColor("_Color",carpetSO.Color);
         ShapeGenerator shapeGenerator = new ShapeGenerator();
         //shapeGenerator.GenerateTriangle(new Vector2(0,0),new Vector2(1,0), new Vector2(2,1),
         //    0.05f,0.025f, out Vector3[] vertices, out int[] indices);
@@ -60,9 +68,8 @@ public class CarpetMeshCreator : MonoBehaviour
         //    new Vector2(t,t*2.5f),
         //    new Vector2(t*1.5f,t*0.5f),
         //};
-        shapeGenerator.GeneratePolygon(vertices2D,
-            0.05f, 0.025f, out Vector3[] vertices, out int[] indices, out Vector2 bottomMost, out Vector2 topMost);
-
+        shapeGenerator.GeneratePolygon(carpetSO.Polygon,//vertices2D,
+            0.05f, 0.025f, out Vector3[] vertices, out int[] indices, out Vector2 bottomMost, out Vector2 topMost); ;
 
 
         //shapeGenerator.GenerateTriangle(new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1.5f),
@@ -131,7 +138,7 @@ public class CarpetMeshCreator : MonoBehaviour
         meshFilter.mesh = mesh;
         Carpet carpet = new Carpet()
         {
-            Polygon = vertices2D,
+            Polygon = carpetSO.Polygon,//vertices2D,
             TopMost = topMost,
             BottomMost = bottomMost
         };
@@ -139,5 +146,76 @@ public class CarpetMeshCreator : MonoBehaviour
         if(shouldTriggerEvent)
             MeshRebuiltCallback?.Invoke(carpet);
         Debug.Log("Mesh Bounds " + meshRenderer.bounds.size);
+    }
+}
+
+[CustomEditor(typeof(CarpetMeshCreator))]
+[CanEditMultipleObjects]
+public class CarpetMeshCreatorCE : Editor
+{
+    //SerializedProperty vertices2D;
+    //SerializedProperty shouldRebuild;
+    //SerializedProperty MeshRebuiltCallback;
+    //SerializedProperty carpetSO;
+
+    CarpetMeshCreator carpetMeshCreator;
+
+    private void OnEnable()
+    {
+        //vertices2D = serializedObject.FindProperty("vertices2D");
+        //shouldRebuild = serializedObject.FindProperty("shouldRebuild");
+        //MeshRebuiltCallback = serializedObject.FindProperty("MeshRebuiltCallback");
+        //carpetSO = serializedObject.FindProperty("carpetSO");
+        carpetMeshCreator = target as CarpetMeshCreator;
+    }
+    public override void OnInspectorGUI()
+    {
+
+        //serializedObject.Update();
+
+        //base.OnInspectorGUI();
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Carpet Scriptable Object");
+        EditorGUILayout.ObjectField(carpetMeshCreator.carpetSO,typeof(CarpetSO),true);
+        EditorGUILayout.EndHorizontal();
+
+        //EditorGUILayout.PropertyField(vertices2D);
+
+        //if (GUILayout.Button("Rebuild Mesh"))
+        //    shouldRebuild.boolValue = true;
+
+
+        //EditorGUILayout.PropertyField(MeshRebuiltCallback);
+        //EditorGUILayout.EventField(carpetMeshCreator.MeshRebuiltCallback, typeof(MeshRebuiltEvent), true);
+
+        //serializedObject.ApplyModifiedProperties();
+
+
+    }
+
+
+    private void OnSceneGUI()
+    {        
+
+        Handles.BeginGUI();
+        EditorGUILayout.BeginVertical("HelpBox", GUILayout.Width(100), GUILayout.Height(100));
+        EditorGUILayout.LabelField("Hello Custom Editor");
+        if (GUILayout.Button("Rebuild Mesh"))
+        {            
+
+        }
+
+        EditorGUILayout.EndVertical();
+        Handles.EndGUI();
+        int n = carpetMeshCreator.carpetSO.Polygon.Length;
+        for (int i = 0; i<n; i++)
+        {
+            var v = carpetMeshCreator.carpetSO.Polygon[i];
+            var v2 = carpetMeshCreator.carpetSO.Polygon[i==n-1?0:i+1];
+            carpetMeshCreator.carpetSO.Polygon[i] = Handles.PositionHandle(new Vector3(v.x,0,v.y),Quaternion.identity);
+            //carpetMeshCreator.carpetSO.Polygon[i] = Handles.FreeMoveHandle(v, Quaternion.identity, 0.5f, Vector3.one, Handles.SphereHandleCap);
+            Handles.DrawLine(new Vector3(v.x,0,v.y), new Vector3(v2.x,0,v2.y));
+        }
     }
 }

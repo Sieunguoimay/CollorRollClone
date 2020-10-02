@@ -56,14 +56,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Utils\ShapeGenerator.cs" />
+    <Compile Include="Assets\Scripts\Utils\Utils.cs" />
     <Compile Include="Assets\Scripts\Utils\PolygonParallelCuttor.cs" />
     <Compile Include="Assets\Scripts\Utils\Triangulator.cs" />
+    <Compile Include="Assets\Scripts\CarpetMeshCreator.cs" />
+    <Compile Include="Assets\Scripts\CarpetRoller.cs" />
     <Compile Include="Assets\Scripts\Utils\VariableChangeEventPublisher.cs" />
     <Compile Include="Assets\Scripts\CarpetInteractable.cs" />
     <Compile Include="Assets\Scripts\Utils\PolygonParallelSubdivisor.cs" />
-    <Compile Include="Assets\Scripts\CarpetMeshCreator.cs" />
-    <Compile Include="Assets\Scripts\CarpetRoller.cs" />
-    <Compile Include="Assets\Scripts\Utils\Utils.cs" />
+    <Compile Include="Assets\Scripts\PolygonVertex.cs" />
+    <Compile Include="Assets\Scripts\CarpetEditor.cs" />
+    <Compile Include="Assets\Scripts\GameEditor.cs" />
+    <Compile Include="Assets\Scripts\MainGame.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\CarpetSO.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\Shaders\Carpet.shader" />
