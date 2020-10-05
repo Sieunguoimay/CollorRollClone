@@ -39,7 +39,7 @@ public class PolygonParallelSubdivisor
             outputPolygon.Clear();
             for (int i = 0; i < polygon.Length-1; i++)
             {
-                Vector2 a = polygon[i];
+                Vector2 a= polygon[i];
                 Vector2 b = polygon[i == polygon.Length - 1 ? 0 : i + 1];
 
                 if(a.y<linePointA.y&&a.y>linePointA.y-size)

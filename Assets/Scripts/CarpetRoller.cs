@@ -39,7 +39,6 @@ public class CarpetRoller : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("Carpet interactable component");
         meshRenderer = GetComponent<MeshRenderer>();
         material = meshRenderer.materials[0];
 
@@ -78,7 +77,7 @@ public class CarpetRoller : MonoBehaviour
                 {
                     if (!autoRolling && rolling)
                     {
-                        rollingRountine = roll(0.5f, isRollingIn);
+                        rollingRountine = roll(0.5f, !isRollingIn);
                         StartCoroutine(rollingRountine);
                     }
                 }
@@ -138,7 +137,7 @@ public class CarpetRoller : MonoBehaviour
                         isFirstTouch = true;
                         if (rolling)
                         {
-                            rollingRountine = roll(0.5f, isRollingIn);
+                            rollingRountine = roll(0.5f, !isRollingIn);
                             StartCoroutine(rollingRountine);
                         }
                     }
@@ -149,6 +148,9 @@ public class CarpetRoller : MonoBehaviour
 
     public void OnCarpetMeshRebuilt(Carpet carpet)
     {
+        //material has been reallocated
+        material = meshRenderer.materials[0];
+
         this.carpet = carpet;
         carpetLength = (carpet.TopMost.y - carpet.BottomMost.y)*transform.localScale.z;
 
@@ -158,6 +160,8 @@ public class CarpetRoller : MonoBehaviour
         startAngle = Mathf.Abs(unrolledAngle) + Mathf.PI * 2f;
         material?.SetFloat("_StartAngle", startAngle);
 
+
+        Rolled = false;
         setUnrolledAngle(unrolledAngle);
         //Debug.Log("OnCarpetMeshRebuilt: " + carpet.Polygon.Length+ " "+ carpet.TopMost+" "+carpet.BottomMost+" "+carpetLength);
     }
@@ -180,7 +184,7 @@ public class CarpetRoller : MonoBehaviour
 
         float elapsedTime = 0;
         float startingAngle = currentAngle;
-        float endingAngle = state ? unrolledAngle : rolledAngle;
+        float endingAngle = state ? rolledAngle : unrolledAngle;
         autoRolling = true;
         while (elapsedTime < time)
         {

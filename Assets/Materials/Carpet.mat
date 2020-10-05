@@ -29,5 +29,5 @@ Material:
     - _StartAngle: 12.56
     - _UnrolledAngle: 14.97
     m_Colors:
-    - _Color: {r: 0.747953, g: 0.8254214, b: 0.8301887, a: 1}
+    - _Color: {r: 1, g: 0.3537736, b: 0.3537736, a: 0}
   m_BuildTextureStacks: []
