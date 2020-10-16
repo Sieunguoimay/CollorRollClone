@@ -127,7 +127,7 @@
 
                 half3 worldNormal = UnityObjectToWorldNormal(v.normal);
 
-                half nl = dot(worldNormal, _WorldSpaceLightPos0.xyz);
+                half nl = max(0,dot(worldNormal, _WorldSpaceLightPos0.xyz));
                 o.diff = nl * _LightColor0.rgb;
                 o.ambient = ShadeSH9(half4(worldNormal, 1));
 
@@ -136,15 +136,16 @@
 
             fixed4 frag(v2f i) : SV_Target
             {
-                // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                fixed4 col = _Color;
 
-                fixed3 lighting = i.diff + i.ambient;
+                fixed3 lighting = i.diff*0.5 +i.ambient+fixed3(0.5,0.5,0.5);
                 col.rgb *= lighting;
 
                 return col;
             }
             ENDCG
         }
+        UsePass "Legacy Shaders/VertexLit/SHADOWCASTER"
+
     }
 }

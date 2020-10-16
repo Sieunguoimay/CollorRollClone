@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SkiaDemo1;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Http.Headers;
@@ -7,45 +8,94 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [Serializable]
-public class MeshRebuiltEvent: UnityEvent<Carpet> { }
+public class MeshRebuiltEvent: UnityEvent<CarpetRawMesh> { }
 
-public class Carpet
+public class CarpetRawMesh
 {
     public Vector2[] Polygon;
+    public Vector2 Position;
+    public Vector2 LeftMost;
+    public Vector2 RightMost;
     public Vector2 TopMost;
     public Vector2 BottomMost;
 }
 
 public class CarpetMeshCreator : MonoBehaviour
 {
-    private MeshRenderer meshRenderer;
-    private MeshFilter meshFilter;
+    public MeshFilter meshFilter { get; private set; }
 
     public CarpetSO carpetSO;
-    [SerializeField] bool shouldRebuild = false;
 
-    public MeshRebuiltEvent MeshRebuiltCallback = null;
+    [SerializeField] float thickness = 0.05f;
+    [SerializeField] float horizontalLineSpacing =0.05f;
 
+    public Action<CarpetRawMesh> MeshRebuiltCallback = null;
 
-    void Start()
-    {
-        RebuildMesh();
-    }
+    public float Thickness { get => thickness; }
+
+    public Vector4 Bounds { private set; get; }
 
     public void RebuildMesh(bool shouldTriggerEvent = true)
     {
 
-        meshRenderer = GetComponent<MeshRenderer>();
         meshFilter = GetComponent<MeshFilter>();
 
         //Change the material color by changing the material??
-        Material m = new Material(meshRenderer.sharedMaterial);
-        m.color = carpetSO.Color;
-        meshRenderer.sharedMaterial = m;
+
+        GetComponent<CarpetMPBlock>().Block.SetColor("_Color", carpetSO.Color);
+
+        carpetSO.PoleOfInaccessibility = PolyLabel.GetPolyLabel(carpetSO.Polygon.ToArray());
+
+        float left = float.MaxValue, right = float.MinValue, top = float.MinValue, bottom = float.MaxValue;
+
+        var tangent = carpetSO.PivotPoints[1] - carpetSO.PivotPoints[0];
+        
+        var quaternion = Quaternion.LookRotation((carpetSO.IsPivotClockwise?-1:1)*new Vector3(tangent.y,0, tangent.x),Vector3.up);
+
+        var vertices2D = new Vector2[carpetSO.Polygon.Count];
+
+        for (int i = 0; i<carpetSO.Polygon.Count; i++)
+        {
+            var p = carpetSO.Polygon[i];
+
+            var v = quaternion*new Vector3(p.x,0, p.y);
+
+            vertices2D[i] = new Vector2(v.x, v.z);
+
+            if (p.x < left)
+            {
+                left = p.x;
+            }
+
+            if (p.x > right)
+            {
+                right = p.x;
+            }
+
+            if (p.y < bottom)
+            {
+                bottom = p.y;
+            }
+
+            if (p.y > top)
+            {
+                top = p.y;
+            }
+        }
+
+        Bounds = new Vector4(left, right, top, bottom);
+
+        transform.localPosition = new Vector3(carpetSO.Position.x, transform.position.y, carpetSO.Position.y);
+        transform.rotation = Quaternion.Inverse(quaternion);
+
 
         ShapeGenerator shapeGenerator = new ShapeGenerator();
-        shapeGenerator.GeneratePolygon(carpetSO.Polygon.ToArray(),//vertices2D,
-            0.05f, 0.025f, out Vector3[] vertices, out int[] indices, out Vector2 bottomMost, out Vector2 topMost); ;
+
+        shapeGenerator.GeneratePolygon(vertices2D,
+            horizontalLineSpacing, thickness, 
+            out Vector3[] vertices, out int[] indices, 
+            out Vector2 leftMost, out Vector2 rightMost, 
+            out Vector2 bottomMost, out Vector2 topMost);
 
         Mesh mesh = new Mesh();
         mesh.vertices = vertices;
@@ -54,19 +104,24 @@ public class CarpetMeshCreator : MonoBehaviour
         mesh.RecalculateBounds();
 
         meshFilter.mesh = mesh;
-        Carpet carpet = new Carpet()
+
+        CarpetRawMesh carpet = new CarpetRawMesh()
         {
-            Polygon = carpetSO.Polygon.ToArray(),//vertices2D,
+            Polygon = vertices2D,
+            Position = carpetSO.Position,
+            RightMost = rightMost,
+            LeftMost = leftMost,
             TopMost = topMost,
             BottomMost = bottomMost
         };
-        
-        if(shouldTriggerEvent) MeshRebuiltCallback?.Invoke(carpet);
+
+        if (shouldTriggerEvent) MeshRebuiltCallback?.Invoke(carpet);
     }
+
 }
 
-[CustomEditor(typeof(CarpetMeshCreator))]
-[CanEditMultipleObjects]
+//[CustomEditor(typeof(CarpetMeshCreator))]
+//[CanEditMultipleObjects]
 public class CarpetMeshCreatorCE : Editor
 {
     CarpetMeshCreator carpetMeshCreator;
@@ -85,15 +140,6 @@ public class CarpetMeshCreatorCE : Editor
             carpetMeshCreator.RebuildMesh();
         EditorGUILayout.EndVertical();
 
-
-        //EditorGUILayout.ObjectField(carpetMeshCreator.carpetSO, typeof(CarpetSO), true);
-        //EditorGUILayout.PropertyField(vertices2D);
-        //if (GUILayout.Button("Rebuild Mesh"))
-        //    shouldRebuild.boolValue = true;
-        //EditorGUILayout.PropertyField(MeshRebuiltCallback);
-        //EditorGUILayout.EventField(carpetMeshCreator.MeshRebuiltCallback, typeof(MeshRebuiltEvent), true);
-        //serializedObject.Update();
-        //serializedObject.ApplyModifiedProperties();
     }
 
 
@@ -142,6 +188,15 @@ public class CarpetMeshCreatorCE : Editor
 
 
 
+
+//EditorGUILayout.ObjectField(carpetMeshCreator.carpetSO, typeof(CarpetSO), true);
+//EditorGUILayout.PropertyField(vertices2D);
+//if (GUILayout.Button("Rebuild Mesh"))
+//    shouldRebuild.boolValue = true;
+//EditorGUILayout.PropertyField(MeshRebuiltCallback);
+//EditorGUILayout.EventField(carpetMeshCreator.MeshRebuiltCallback, typeof(MeshRebuiltEvent), true);
+//serializedObject.Update();
+//serializedObject.ApplyModifiedProperties();
 //GameObject plane = new GameObject("Triangulator");
 //MeshRenderer _meshRenderer = plane.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
 //MeshFilter meshFilter = plane.AddComponent(typeof(MeshFilter)) as MeshFilter;

@@ -24,10 +24,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _AnglePerUnit: 6.28
-    - _Pitch: 0.01
-    - _StartAngle: 12.56
-    - _UnrolledAngle: 14.97
+    - _AnglePerUnit: 4.5
+    - _Pitch: 0.025
+    - _StartAngle: 3.86
+    - _UnrolledAngle: 0.97
     m_Colors:
-    - _Color: {r: 1, g: 0.3537736, b: 0.3537736, a: 0}
+    - _Color: {r: 0.6078821, g: 0.9622642, b: 0.21333215, a: 1}
   m_BuildTextureStacks: []

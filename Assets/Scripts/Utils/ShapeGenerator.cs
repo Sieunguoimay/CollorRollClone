@@ -297,7 +297,10 @@ public class ShapeGenerator
     }
 
     public void GeneratePolygon(Vector2 [] polygon, 
-        float unitSize, float thickness, out Vector3[] vertices, out int[] indices, out Vector2 bottomMost, out Vector2 topMost)
+        float unitSize, float thickness, out Vector3[] vertices, out int[] indices, 
+        out Vector2 leftMost, out Vector2 rightMost,
+        out Vector2 bottomMost, out Vector2 topMost
+        )
     {
         Triangulator triangulator = new Triangulator(polygon);
         int [] polygonIndices = triangulator.Triangulate();
@@ -305,6 +308,8 @@ public class ShapeGenerator
         List<Vector3> outputPolygon = new List<Vector3>();
         List<int> outputPolygonIndices = new List<int>();
 
+        leftMost = new Vector2(0, float.MaxValue);
+        rightMost = new Vector2(0, float.MinValue);
         topMost = new Vector2(0, float.MinValue);
         bottomMost = new Vector2(0, float.MaxValue);
         
@@ -325,6 +330,13 @@ public class ShapeGenerator
 
             if (v1.y < bottomMost.y) bottomMost = v1;
             if (v3.y > topMost.y) topMost = v3;
+
+            if (v1.x < leftMost.x) leftMost = v1;
+            if (v2.x < leftMost.x) leftMost = v2;
+            if (v3.x < leftMost.x) leftMost = v3;
+            if (v1.x > rightMost.x) rightMost = v1;
+            if (v2.x > rightMost.x) rightMost = v2;
+            if (v3.x > rightMost.x) rightMost = v3;
         }
         vertices = outputPolygon.ToArray();
         indices = outputPolygonIndices.ToArray();

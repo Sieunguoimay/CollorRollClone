@@ -1,13 +1,17 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class CarpetRoller : MonoBehaviour
 {
-    private Carpet carpet = null;
-    private Material material = null;
-    private MeshRenderer meshRenderer = null;
+    private CarpetMPBlock block;
+
+    private CarpetRawMesh carpetRawMesh = null;
+    public Carpet carpet { private set; get; }
+
     private float carpetLength;
 
     private float pitch;
@@ -20,10 +24,11 @@ public class CarpetRoller : MonoBehaviour
     private bool hitting;
 
     private bool rolling = false;
-    private bool autoRolling = false;
-    private IEnumerator rollingRountine;
+    public bool rollingOut = false;
+    public bool rollingIn = false;
+    public IEnumerator RollingCoroutine;
     private bool isRollingIn = false;
-    [SerializeField] public bool Rolled { private set; get; } = false;
+    public bool RolledIn= true;
 
     private Vector3 hitPoint;
     private Vector3 firstMouse;
@@ -33,167 +38,318 @@ public class CarpetRoller : MonoBehaviour
 
     private float lastRollingDistance = 0.0f;
     private float mouseButtonDownTime = 0.0f;
-    private const float MOUSE_DOWN_TIME = 0.1f;
-
+    private const float MOUSE_DOWN_TIME = 0.2f;
     [SerializeField] bool shouldRoll = false;
-    // Start is called before the first frame update
-    void Start()
-    {
-        meshRenderer = GetComponent<MeshRenderer>();
-        material = meshRenderer.materials[0];
 
-        pitch = material.GetFloat("_Pitch");
-        anglePerUnit = material.GetFloat("_AnglePerUnit");
-    }
-    private void OnDrawGizmos()
+
+    public event Action<bool, GameObject> RollStateChanged = delegate { };
+    public event Action<GameObject> UnrollBegin = delegate { };
+    public event Action<GameObject> OnUnrollEnd = delegate { };
+    public event Action<Carpet> BeforeRollOut = delegate { };
+    public event Action<Carpet> BeforeRollIn = delegate { };
+
+    //private RaycastHit rayCastHit;
+
+    private void Awake()
     {
-        Gizmos.DrawCube(hitPoint, new Vector3(0.1f, 0.1f, 0.1f));
+        RolledIn = true;
+        block = GetComponent<CarpetMPBlock>();
+        carpet = GetComponent<Carpet>();
+
+        pitch = block.sharedMaterial.GetFloat("_Pitch");
+        anglePerUnit = block.sharedMaterial.GetFloat("_AnglePerUnit");
     }
+
     // Update is called once per frame
-    void Update()
-    {
-        if (shouldRoll&&!autoRolling)
-        {
-            shouldRoll = false;
-            rollingRountine = roll(0.5f, !Rolled);
-            StartCoroutine(rollingRountine);
-        }
+    //void Update()
+    //{
+        //if (shouldRoll && !autoRolling)
+        //{
+        //    shouldRoll = false;
+        //    Roll();
+        //}
+
+        //if (isBeingUnrolled)
+        //{
+        //    if (currentAngle != unrolledAngle)
+        //    {
+        //        isBeingUnrolled = false;
+        //        OnUnrollEnd?.Invoke(gameObject);
+        //    }
+        //}
+
+        //if (Input.GetMouseButtonUp(0))
+        //{
+        //    OnMouseButtonUp();
+        //}
+        //if (Input.GetMouseButton(0))
+        //{
+        //    OnMouseButtonDown();
+        //}
+    //}
 
 
-        if (Input.GetMouseButtonUp(0))
-        {
-            if (hitting)
-            {
-                bool isMouseClick = mouseButtonDownTime < MOUSE_DOWN_TIME;
 
-                //touching and release the mouse
-                isFirstTouch = true;
-                if (isMouseClick)
-                {
-                    rollingRountine = roll(0.5f, !Rolled);
-                    StartCoroutine(rollingRountine);
-                }
-                else
-                {
-                    if (!autoRolling && rolling)
-                    {
-                        rollingRountine = roll(0.5f, !isRollingIn);
-                        StartCoroutine(rollingRountine);
-                    }
-                }
-            }
-            mouseButtonDownTime = 0;
-        }
-        if (Input.GetMouseButton(0))
-        {
-            bool isMouseDrag = mouseButtonDownTime > MOUSE_DOWN_TIME;
-            if (mouseButtonDownTime < MOUSE_DOWN_TIME)
-                mouseButtonDownTime += Time.deltaTime;
+    //public void OnMouseButtonDown()
+    //{
+    //    bool isMouseDrag = mouseButtonDownTime > MOUSE_DOWN_TIME;
+    //    if (mouseButtonDownTime < MOUSE_DOWN_TIME)
+    //        mouseButtonDownTime += Time.deltaTime;
 
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+    //    if (InputManager.Current.hit)
+    //    {
+    //        ////horizontal plane only
+    //        //Plane plane = new Plane(transform.up, -transform.position.y);
+    //        //if (plane.Raycast(ray, out float enter))
+    //        //{
+    //        hitPoint = InputManager.Current.raycastHit.point;// ray.GetPoint(enter);
 
-            //horizontal plane only
-            Plane plane = new Plane(transform.up, -transform.position.y);
-            if (plane.Raycast(ray, out float enter))
-            {
-                hitPoint = ray.GetPoint(enter);
-                Vector3 relativeHitPoint = transform.InverseTransformPoint(hitPoint);
-                hitting = checkMouseHitPoint(new Vector2(relativeHitPoint.x, relativeHitPoint.z));
+    //        Vector3 relativeHitPoint = transform.InverseTransformPoint(hitPoint);
 
-                if (isMouseDrag)
-                {
-                    if (hitting)
-                    {
-                        if (isFirstTouch)
-                        {
-                            isFirstTouch = false;
-                            firstMouse = hitPoint;
-                            Vector3 pivot = (transform.TransformPoint(new Vector3(0, 0, carpet.BottomMost.y)));
-                            firstTouchRollingOffset = Vector3.Dot(hitPoint - pivot, transform.forward);
-                            isRollingIn = !Rolled;
+    //        hitting = CheckMouseHitPoint(new Vector2(relativeHitPoint.x, relativeHitPoint.z));
 
-                            if (autoRolling)
-                            {
-                                StopCoroutine(rollingRountine);
-                                autoRolling = false;
-                            }
-                            Debug.Log("Touching");
-                        }
+    //        if (isMouseDrag && !autoRolling)
+    //        {
+    //            if (hitting)
+    //            {
+    //                if (isFirstTouch)
+    //                {
+    //                    isFirstTouch = false;
+    //                    firstMouse = hitPoint;
+    //                    Vector3 pivot = (transform.TransformPoint(new Vector3(0, 0, carpet.BottomMost.y)));
+    //                    firstTouchRollingOffset = Vector3.Dot(hitPoint - pivot, transform.forward);
+    //                    isRollingIn = Rolled;
+
+    //                    //if (autoRolling)
+    //                    //{
+    //                    //    StopCoroutine(rollingRountine);
+    //                    //    autoRolling = false;
+    //                    //}
+
+    //                }
 
 
-                        float rollingDistance = Vector3.Dot(hitPoint - firstMouse, transform.forward);
-                        float unrolledLength = firstTouchRollingOffset + rollingDistance;
-                        float lerpValue = unrolledLength / carpetLength;
+    //                float rollingDistance = Vector3.Dot(hitPoint - firstMouse, transform.forward);
+    //                float unrolledLength = firstTouchRollingOffset + rollingDistance;
+    //                float lerpValue = unrolledLength / carpetLength;
 
-                        setUnrolledAngle(Mathf.Lerp(rolledAngle, unrolledAngle, lerpValue));
-                        if (rollingDistance - lastRollingDistance != 0)
-                            isRollingIn = (rollingDistance - lastRollingDistance > 0);
+    //                //setUnrolledAngle(Mathf.Lerp(rolledAngle, unrolledAngle, lerpValue));
 
-                        lastRollingDistance = rollingDistance;
-                        rolling = (lerpValue > 0.0f && lerpValue < 1.0f);
-                    }
-                    else if(!isFirstTouch)
-                    {
-                        isFirstTouch = true;
-                        if (rolling)
-                        {
-                            rollingRountine = roll(0.5f, !isRollingIn);
-                            StartCoroutine(rollingRountine);
-                        }
-                    }
-                }
-            }
-        }
-    }
+    //                //float diff = rollingDistance - lastRollingDistance;
+    //                //if (Mathf.Abs(diff) > 0.05f)
+    //                //    isRollingIn = (diff > 0);
 
-    public void OnCarpetMeshRebuilt(Carpet carpet)
+    //                lastRollingDistance = rollingDistance;
+    //                rolling = (lerpValue > 0.0f && lerpValue < 1.0f);
+    //            }
+    //            else if (!isFirstTouch)
+    //            {
+    //                //isFirstTouch = true;
+    //                //if (rolling)
+    //                //{
+    //                //    rollingRountine = roll(getTimeToRoll(0.1f, 0.5f, !isRollingIn), !isRollingIn);
+    //                //    StartCoroutine(rollingRountine);
+    //                //}
+    //            }
+    //        }
+    //    }
+    //}
+    //public void OnMouseButtonUp()
+    //{
+    //    if (hitting)
+    //    {
+    //        bool isMouseClick = mouseButtonDownTime < MOUSE_DOWN_TIME;
+
+    //        //touching and release the mouse
+    //        isFirstTouch = true;
+    //        if (isMouseClick)
+    //        {
+    //            //onBeforeRoll = temp;
+    //            StartCoroutine(Roll());
+    //        }
+    //        else
+    //        {
+    //            if (!autoRolling && rolling)
+    //            {
+    //                RollingCoroutine = roll(getTimeToRoll(0.1f, 0.5f, !isRollingIn), !isRollingIn);
+    //                StartCoroutine(RollingCoroutine);
+    //            }
+    //        }
+    //    }
+    //    mouseButtonDownTime = 0;
+    //}
+    public void HandleCarpetMeshRebuilt(CarpetRawMesh carpet)
     {
         //material has been reallocated
-        material = meshRenderer.materials[0];
+        //material = meshRenderer.sharedMaterial;// materials[0];
 
-        this.carpet = carpet;
-        carpetLength = (carpet.TopMost.y - carpet.BottomMost.y)*transform.localScale.z;
+        this.carpetRawMesh = carpet;
+        carpetLength = (carpet.TopMost.y - carpet.BottomMost.y) * transform.localScale.z;
 
-        unrolledAngle = carpet.TopMost.y* anglePerUnit;
+
+        unrolledAngle = carpet.TopMost.y * anglePerUnit;
         rolledAngle = carpet.BottomMost.y * anglePerUnit;
 
-        startAngle = Mathf.Abs(unrolledAngle) + Mathf.PI * 2f;
-        material?.SetFloat("_StartAngle", startAngle);
+        startAngle = Mathf.Abs(unrolledAngle) + Mathf.PI * 1.5f;
+        block.Block.SetFloat("_StartAngle", startAngle);
 
+        float fullRadius = pitch * (startAngle - rolledAngle);
+        rolledAngle = (carpet.BottomMost.y-fullRadius*0.5f) * anglePerUnit;
 
-        Rolled = false;
-        setUnrolledAngle(unrolledAngle);
-        //Debug.Log("OnCarpetMeshRebuilt: " + carpet.Polygon.Length+ " "+ carpet.TopMost+" "+carpet.BottomMost+" "+carpetLength);
+        RolledIn = true;
+        SetUnrolledAngle(rolledAngle);
     }
-    private void setUnrolledAngle(float angle)
+    private void SetUnrolledAngle(float angle)
     {
         currentAngle = angle;
-        material?.SetFloat("_UnrolledAngle", currentAngle);
+        //material?.SetFloat("_UnrolledAngle", currentAngle);
+        block.Block.SetFloat("_UnrolledAngle", currentAngle);
     }
-    private bool checkMouseHitPoint(Vector2 relativePoint)
+    public bool CheckMouseHitPoint(Vector2 relativePoint)
     {
-        float radius = pitch * (startAngle-currentAngle);
+        float radius = pitch * (startAngle - currentAngle);
         float upperBound = currentAngle / anglePerUnit + radius;
+
         if (relativePoint.y > upperBound) return false;
-        return Utils.Instance.ContainsPoint(carpet.Polygon, relativePoint);
+
+        float lowerBound = currentAngle / anglePerUnit - radius;
+        float left = carpetRawMesh.LeftMost.x;
+        float right = carpetRawMesh.RightMost.x;
+        if (lowerBound > carpetRawMesh.LeftMost.y)
+            left = carpetRawMesh.BottomMost.x;
+        if (lowerBound > carpetRawMesh.RightMost.y)
+            right = carpetRawMesh.BottomMost.x;
+
+
+
+        if (left != right)
+        {
+
+            //Vector3 topLeft = new Vector3(left, 0, upperBound);
+            //Vector3 bottomLeft = new Vector3(left, 0, lowerBound);
+            //Vector3 topRight = new Vector3(right, 0, upperBound);
+            //Vector3 bottomRight = new Vector3(right, 0, lowerBound);
+
+            //Debug.DrawLine(topLeft, topRight);
+            //Debug.DrawLine(topLeft, bottomLeft);
+            //Debug.DrawLine(bottomRight, bottomLeft);
+            //Debug.DrawLine(bottomRight, topRight);
+
+            //Vector3 relPoint = new Vector3(relativePoint.x, 0, relativePoint.y);
+            //Debug.DrawLine(relPoint, relPoint + new Vector3(1, 0, 0));
+
+            if ((relativePoint.x > left && relativePoint.x < right) &&
+                (relativePoint.y > lowerBound && relativePoint.y < upperBound))
+            {
+                //Debug.Draw(transform.InverseTransformPoint(hitPoint), new Vector3(0.1f, 0.1f, 0.1f));
+
+                //if (relativePoint.y > upperBound) return false;
+                return true;
+            }
+        }
+
+        return Utils.Instance.ContainsPoint(carpetRawMesh.Polygon, relativePoint);
     }
+    //public void OnDrawGizmos()
+    //{
+    //    if (carpet != null)
+    //        for (int i = 0; i < carpet.Polygon.Length; i++)
+    //        {
+    //            var p1 = carpet.Polygon[i];
+    //            var p2 = carpet.Polygon[(i == carpet.Polygon.Length - 1) ? 0 : (i + 1)] ;
+    //            Debug.DrawLine(new Vector3(p1.x, 0, p1.y), new Vector3(p2.x, 0, p2.y));
+    //        }
+    //}
 
-    private IEnumerator roll(float time, bool state)
+    //public IEnumerator Roll()
+    //{
+    //    if (!Rolled)
+    //    {
+    //        if (OnBeforeRoll != null)
+    //            yield return StartCoroutine(OnBeforeRoll(gameObject));
+    //    }
+    //    else
+    //        OnBeforeUnroll?.Invoke(gameObject);
+
+    //    RollingCoroutine = RollEnumerator(getTimeToRoll(0.1f, 0.5f, !Rolled), !Rolled);
+    //    yield return StartCoroutine(RollingCoroutine);
+
+    //}
+
+    public void RollIn()
     {
-        Debug.Log("Rolling Coroutine");
+        if (RolledIn == false)
+        {
+            rollingIn = true;
+            BeforeRollIn?.Invoke(carpet);
+            RollingCoroutine = RollEnumerator(getTimeToRoll(0.1f, 0.5f, !RolledIn), !RolledIn);
+            StartCoroutine(RollingCoroutine);
+        }
+    }
+    public void RollOut()
+    {
+        if (RolledIn == true)
+        {
+            rollingOut = true;
+            BeforeRollOut?.Invoke(carpet);
+            RollingCoroutine = RollEnumerator(getTimeToRoll(0.1f, 0.5f, !RolledIn), !RolledIn);
+            StartCoroutine(RollingCoroutine);
+        }
+    }
+    public void RollOutImmediate()
+    {
+        if (RolledIn == true)
+        {
+            RolledIn = false;
 
+            SetUnrolledAngle(unrolledAngle);
+
+            BeforeRollOut?.Invoke(carpet);
+
+            RollStateChanged?.Invoke(RolledIn, gameObject);
+
+        }
+    }
+    private IEnumerator RollEnumerator(float time, bool state)
+    {
         float elapsedTime = 0;
         float startingAngle = currentAngle;
         float endingAngle = state ? rolledAngle : unrolledAngle;
-        autoRolling = true;
+
         while (elapsedTime < time)
         {
-            setUnrolledAngle(Mathf.Lerp(startingAngle, endingAngle, (elapsedTime / time)));
+            SetUnrolledAngle(Mathf.Lerp(startingAngle, endingAngle, (elapsedTime / time)));
+
             elapsedTime += Time.deltaTime;
+
             yield return null;
         }
-        Rolled = state;
-        autoRolling = false;
+
+        if (RolledIn != state)
+        {
+            RolledIn = state;
+
+            RollStateChanged?.Invoke(RolledIn, gameObject);
+        }
+
+        if (!RolledIn)
+        {
+
+            SetUnrolledAngle(unrolledAngle);
+
+            UnrollBegin?.Invoke(gameObject);
+        }
+
+        rollingIn = false;
+        rollingOut = false;
+    }
+
+    private float getTimeToRoll(float a, float b, bool rollingIn)
+    {
+        if (rollingIn)
+            return 0.5f * Mathf.Lerp(a, b, Mathf.Max(0, Mathf.Abs(currentAngle - rolledAngle) / Mathf.Abs(unrolledAngle - rolledAngle)));
+        else
+            return Mathf.Lerp(a, b, Mathf.Max(0, Mathf.Abs(currentAngle - unrolledAngle) / Mathf.Abs(rolledAngle - unrolledAngle)));
     }
 
 
