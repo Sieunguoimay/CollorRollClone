@@ -14,19 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Polygon:
   - {x: -1, y: 0}
-  - {x: -4, y: 0}
-  - {x: -4, y: 2}
-  - {x: -1, y: 2}
-  Color: {r: 1, g: 0.6238929, b: 0.16470587, a: 1}
+  - {x: -5, y: 0}
+  - {x: -5, y: 3}
+  - {x: -1, y: 3}
+  Color: {r: 1, g: 0.6577199, b: 0.24056602, a: 1}
   Position: {x: 0, y: 0}
-  PoleOfInaccessibility: {x: -2.5, y: 1}
+  PoleOfInaccessibility: {x: -3, y: 1.5}
   PivotPoints:
-  - {x: -4, y: 2}
-  - {x: -1, y: 2}
-  Order: 2
+  - {x: -5, y: 3}
+  - {x: -1, y: 3}
+  Order: 3
   IsPivotClockwise: 1
   stickPivotToEdge: 1
   pivotPoint1: 2
   pivotPoint2: 3
   displayDefaultEditor: 0
-  show: 1
+  show: 0

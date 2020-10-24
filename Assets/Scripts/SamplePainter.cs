@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.Video;
 
@@ -17,29 +16,37 @@ public class SamplePainter : MonoBehaviour
     public Color DefaultColor = new Color(0,0,0,0);
 
     private const float baseWidth = 8.0f;
+    private Vector3 originalScale;
+
+    private void Awake()
+    {
+        originalScale = canvas.transform.localScale;
+    }
 
     public virtual void Paint(LevelSO levelSO, bool useSameColor = false)
     {
         currentLevelSO = levelSO;
+
         if (currentLevelSO == null)
         {
             return;
         }
         
 
-        float width = GenerateMesh(currentLevelSO.carpetSOs,useSameColor);
+        var bounds = GenerateMesh(currentLevelSO.carpetSOs,useSameColor);
 
-        float ratio = baseWidth / width;
+        float ratio = baseWidth / Mathf.Max(bounds.size.x, bounds.size.y);
 
-        canvas.transform.localScale *= ratio;
+        canvas.transform.localScale = originalScale*ratio;
 
-        var x = currentLevelSO.Position.x * canvas.transform.localScale.x;
-        var z = currentLevelSO.Position.y * canvas.transform.localScale.z;
-
-        canvas.transform.localPosition = new Vector3(x, 0.01f, z);
+        //var x = currentLevelSO.Position.x * canvas.transform.localScale.x;
+        //var z = currentLevelSO.Position.y * canvas.transform.localScale.z;
+        var x = bounds.center.x * canvas.transform.localScale.x;
+        var z = bounds.center.y * canvas.transform.localScale.z;
+        canvas.transform.localPosition = new Vector3(-x, 0.01f, -z);
     }
 
-    protected float GenerateMesh(List<CarpetSO> carpetSOs,bool useSameColor )
+    protected Bounds GenerateMesh(List<CarpetSO> carpetSOs,bool useSameColor )
     {
 
         int n = carpetSOs.Count;
@@ -47,7 +54,10 @@ public class SamplePainter : MonoBehaviour
         polygons = new Mesh[n];
 
         blocks = new MaterialPropertyBlock[n];
+
         float left = float.MaxValue, right = float.MinValue;
+        float bottom = float.MaxValue, top = float.MinValue;
+
         for (int i = 0; i < n; i++)
         {
             var c = carpetSOs[i];
@@ -70,6 +80,12 @@ public class SamplePainter : MonoBehaviour
                     left = p.x;
                 if (p.x > right)
                     right = p.x;
+
+
+                if (p.y < bottom)
+                    bottom = p.y;
+                if (p.y > top)
+                    top = p.y;
             }
 
             polygons[i] = new Mesh();
@@ -90,8 +106,9 @@ public class SamplePainter : MonoBehaviour
 
             blocks[i].SetFloat("_YOffset", (float)c.Order * 0.0001f);
         }
-        return right - left;
+        return new Bounds() { size = new Vector3(right - left, top - bottom,0),center = new Vector3(right+left,top+bottom,0)*0.5f };
     }
+
     private void Update()
     {
         if (polygons == null)

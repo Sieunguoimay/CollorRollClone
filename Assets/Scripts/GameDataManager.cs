@@ -17,9 +17,9 @@ public class GameDataManager : MonoBehaviour
         return gameDataSO.CurrentLevel < gameDataSO.levelSOs.Length;
     }
 
-    public bool IncrementLevel()
+    public bool IncreaseLevel()
     {
-        if (gameDataSO.CurrentLevel < gameDataSO.levelSOs.Length-1)
+        if (gameDataSO.CurrentLevel < gameDataSO.levelSOs.Length)
         {
             gameDataSO.CurrentLevel++;
 
@@ -33,20 +33,20 @@ public class GameDataManager : MonoBehaviour
         }
     }
     
-    public void IncreaseUsedHintCount()
+    public void DecreaseHintNum()
     {
-        if (gameDataSO.UsedHintCount < GlobalAccess.Current.ConstantsSO.MaxHint)
+        if (gameDataSO.HintNum >0)
         {
-            gameDataSO.UsedHintCount++;
-        }
+            gameDataSO.HintNum--;
 
-        HintNumChanged?.Invoke(gameDataSO.UsedHintCount);
+            HintNumChanged?.Invoke(gameDataSO.HintNum);
+        }
     }
 
     public void SetUsedHintCount(int n)
     {
-        gameDataSO.UsedHintCount = n;
+        gameDataSO.HintNum = n;
 
-        HintNumChanged?.Invoke(gameDataSO.UsedHintCount);
+        HintNumChanged?.Invoke(gameDataSO.HintNum);
     }
 }

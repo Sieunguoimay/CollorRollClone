@@ -83,12 +83,12 @@ Material:
     - _SrcBlend: 1
     - _StartAngle: 25
     - _UVSec: 0
-    - _UnrolledAngle: 2.66
+    - _UnrolledAngle: 17.65
     - _WindStrength: 1
     - _ZWrite: 1
     m_Colors:
     - _BottomColor: {r: 0.33953306, g: 0.5, b: 0.20518869, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 0.0047169924, b: 0.0047169924, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _TopColor: {r: 1, g: 0.9931301, b: 0.19215685, a: 1}
     - _WindFrequency: {r: 0.05, g: 0.05, b: 0, a: 0}

@@ -2,7 +2,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif //UNITY_EDITOR
+
 using UnityEngine;
 
 [CreateAssetMenu(fileName ="CarpetSO",menuName ="ScriptableObjects/CarpetSO", order =1)]
@@ -24,6 +27,7 @@ public class CarpetSO : ScriptableObject
     public bool displayDefaultEditor = false;
     public bool show = true;
 }
+#if UNITY_EDITOR
 
 [CustomEditor(typeof(CarpetSO))]
 public class CarpetSOCE : Editor
@@ -175,6 +179,8 @@ public class CarpetSOCE : Editor
         }
         if (GUILayout.Button("Round up"))
         {
+            carpetSO.Position = new Vector2(Mathf.Round(carpetSO.Position.x), Mathf.Round(carpetSO.Position.y));
+
             for (int i = 0; i < carpetSO.Polygon.Count; i++)
             {
                 carpetSO.Polygon[i] = new Vector2(Mathf.Round(carpetSO.Polygon[i].x), Mathf.Round(carpetSO.Polygon[i].y));
@@ -242,3 +248,4 @@ public class CarpetSOCE : Editor
 
     }
 }
+#endif //UNITY_EDITOR

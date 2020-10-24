@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Sieunguoimay;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CarpetTreeController : MonoBehaviour
+public class CarpetTreeController : MonoBehaviour, ICaller
 {
     // Start is called before the first frame update
 
@@ -13,7 +14,12 @@ public class CarpetTreeController : MonoBehaviour
     private CarpetRoller rollerToRoll = null;
 
     private int rollTillMatchedTrigger = 0;
-    private bool rollOutNextTrigger = false;
+
+    public Action RollOutDone = delegate { };
+
+    private Action HintPerformed = delegate { };
+
+    public Action CarpetLocked = delegate { };
 
     void Start()
     {
@@ -21,6 +27,13 @@ public class CarpetTreeController : MonoBehaviour
 
         InputManager.Current.MouseButtonDown += HandleMouseButtonDown;
     }
+
+    public void Reset()
+    {
+        rootNodeToRoll = null;
+        enabled = true;
+    }
+
     private void Update()
     {
         if (rootNodeToRoll != null)
@@ -33,6 +46,7 @@ public class CarpetTreeController : MonoBehaviour
                 {
                     rollerToRoll = null;
                     rootNodeToRoll = null;
+
                 }
                 else
                 {
@@ -47,6 +61,7 @@ public class CarpetTreeController : MonoBehaviour
                 }
             }
         }
+
         if (rollTillMatchedTrigger>0)
         {
             if (rollerToRoll == null)
@@ -58,6 +73,7 @@ public class CarpetTreeController : MonoBehaviour
                     if (nodeToRoll == carpetTree.CurrentTree || nodeToRoll == null)
                     {
                         rollTillMatchedTrigger--;
+
                         rollerToRoll = null;
                     }
                     else
@@ -100,7 +116,9 @@ public class CarpetTreeController : MonoBehaviour
             foreach (var roller in carpetTree.CarpetRollers)
             {
                 Vector3 relativeHitPoint = roller.transform.InverseTransformPoint(hitpoint);
+
                 Vector2 hitpoint2 = new Vector3(relativeHitPoint.x, relativeHitPoint.z);
+
                 if (roller.CheckMouseHitPoint(hitpoint2))
                 {
                     if (roller.RolledIn)
@@ -129,15 +147,22 @@ public class CarpetTreeController : MonoBehaviour
                 }
                 else
                 {
-                    RollFromNode(topHitRoller.carpet.node);
+                    RollInFromNode(topHitRoller.carpet.node);
                 }
             }
         }
     }
 
-    public void RollFromNode(Node<Carpet> node)
+    public void RollInFromNode(Node<Carpet> node)
     {
-        rootNodeToRoll = node;
+        if (!node.obj.hintFlag)
+        {
+            rootNodeToRoll = node;
+        }
+        else
+        {
+            CarpetLocked?.Invoke();
+        }
     }
 
     private Node<Carpet> RollInOnce(Node<Carpet> root)
@@ -151,28 +176,34 @@ public class CarpetTreeController : MonoBehaviour
 
         if (nodeToRoll != null)
         {
-            if (nodeToRoll.obj.hintFlag)
+            if (!nodeToRoll.obj.hintFlag)
             {
-                return null;
-            }
+                var r = nodeToRoll.obj.carpetRoller;
 
-            var r = nodeToRoll.obj.carpetRoller;
-
-            if (r != null)
-            {
-                if (r.rollingOut)
+                if (r != null)
                 {
-                    StopCoroutine(r.RollingCoroutine);
+                    if (r.rollingOut)
+                    {
+                        StopCoroutine(r.RollingCoroutine);
+                    }
+                    r.RollIn();
                 }
-                r.RollIn();
+            }
+            else
+            {
+                //if the touched carpet was locked by hint
+                //we say this task failed
+                CarpetLocked?.Invoke();
             }
         }
         return nodeToRoll;
     }
 
-    public void PerformHint(int count = 1)
+    public void PerformHint(Action hintPerformed,int count = 1)
     {
         Debug.Log("Doing hint $count actions");
+
+        HintPerformed = hintPerformed;
 
         RollInTillMatched(count);
     }
@@ -188,8 +219,10 @@ public class CarpetTreeController : MonoBehaviour
 
         if (roller != null)
         {
-            roller.RollOut();
-        
+            float t = roller.RollOut(new TaskIdentity() { caller = this, id = 0 });
+
+            new DelayAction(this, RollOutDone, t);
+
             roller.carpet.hintFlag = true;
         }
     }
@@ -211,5 +244,27 @@ public class CarpetTreeController : MonoBehaviour
     public bool IsRolling()
     {
         return (rootNodeToRoll != null);
+    }
+
+    private void DecreaseTrigger()
+    {
+        if (rollTillMatchedTrigger > 0)
+        {
+            rollTillMatchedTrigger--;
+        }
+        else
+        {
+            RollOutDone?.Invoke();
+        }
+    }
+
+    public void InvokeCaller(int taskId)
+    {
+        if(taskId == 0)
+        {
+            //cameback from RollOut By Hint
+
+            HintPerformed?.Invoke();
+        }
     }
 }

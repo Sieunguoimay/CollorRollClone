@@ -17,7 +17,7 @@ MonoBehaviour:
   - {x: -2, y: 3}
   - {x: 0, y: 6}
   - {x: 3, y: 6}
-  Color: {r: 1, g: 0.2971698, b: 0.6614387, a: 1}
+  Color: {r: 0.56006384, g: 0.7254902, b: 0.0980392, a: 1}
   Position: {x: 0, y: 0}
   PoleOfInaccessibility: {x: 0.57575756, y: 3.5454545}
   PivotPoints:
@@ -29,4 +29,4 @@ MonoBehaviour:
   pivotPoint1: 2
   pivotPoint2: 3
   displayDefaultEditor: 0
-  show: 1
+  show: 0

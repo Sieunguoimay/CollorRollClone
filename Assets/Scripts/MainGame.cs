@@ -1,8 +1,4 @@
-﻿using SkiaDemo1;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,11 +8,11 @@ public class Polygon
 
     public void WalkThroughAllVertices(int from, Action<int, Vector2> callback)
     {
-        for(int i = 0; i<vertices.Length; i++)
+        for (int i = 0; i < vertices.Length; i++)
         {
-            int current = (from + i)%vertices.Length;
+            int current = (from + i) % vertices.Length;
 
-            callback(current,vertices[current]);
+            callback(current, vertices[current]);
         }
     }
 }
@@ -24,44 +20,64 @@ public class MainGame : MonoBehaviour
 {
     [SerializeField] private SamplePainter samplePainter;
     [SerializeField] private SamplePainter samplePainter2;
-    [SerializeField] private CarpetTree carpetTree;
+    [SerializeField] public CarpetTree carpetTree;
     [SerializeField] private PSController firework;
 
-    private GameDataManager gameDataManager;
+    [NonSerialized] public GameDataManager gameDataManager;
 
-    public UnityEvent<Bounds> GameSceneChanged;// = delegate { };
+    public UnityEvent<Bounds> GameSceneChanged;
 
     public Action<int> HintNumChanged = delegate { };
     public Action<int> LevelCompleted = delegate { };
     public Action<int> NewLevelLoaded = delegate { };
+    public Action StageCompleted = delegate { };
+    public Action AllLevelsClear = delegate { };
+    public Action TouchedOnLockedCarpet { get => carpetTree.CarpetTreeController.CarpetLocked; set => carpetTree.CarpetTreeController.CarpetLocked = value; }
 
-    void Start()
+    public Action ShouldWatchAdsOnHintButtonClicked = delegate { };
+    public Action ShouldWatchAdsOnLevelCompleted = delegate { };
+
+    private bool useHintLock = false;
+
+    public int levelNumPerStage;
+
+    public int CurrentLevelInStage { get { return gameDataManager.GameDataSO.CurrentLevel % levelNumPerStage; } }
+
+    public int LevelNumInStage
+    {
+        get
+        {
+            var currentStage = gameDataManager.GameDataSO.CurrentLevel / levelNumPerStage;
+            var fullStageNum = gameDataManager.GameDataSO.levelSOs.Length / levelNumPerStage;
+            var remainder = gameDataManager.GameDataSO.levelSOs.Length % levelNumPerStage;
+
+            return currentStage == fullStageNum ? remainder : levelNumPerStage;
+        }
+    }
+
+    void Awake()
     {
 
         gameDataManager = GetComponent<GameDataManager>();
 
         firework.PSPlayingDone += HandleEventFromFirework;
 
+    }
+    private void Start()
+    {
         Init();
     }
 
-
     private bool GenerateScene()
     {
-
-        if (gameDataManager.GameDataSO.CurrentLevel >= gameDataManager.GameDataSO.levelSOs.Length)
-        {
-            return false;
-        }
-
         var levelSO = gameDataManager.GameDataSO.levelSOs[gameDataManager.GameDataSO.CurrentLevel];
 
         carpetTree.GenerateTree(levelSO);
-        
+
         GameSceneChanged?.Invoke(carpetTree.Bounds);
 
         samplePainter.Paint(levelSO);
-        
+
         samplePainter2.DefaultColor = new Color(0.5f, 0.5f, 0.5f, 1);
 
         samplePainter2.Paint(levelSO, true);
@@ -69,108 +85,150 @@ public class MainGame : MonoBehaviour
         return true;
     }
 
-    public void Init()
+    public void ResetGame()
     {
-        if(!GenerateScene())
-        {
-            return;
-        }
+        gameDataManager.GameDataSO.InitializeDefaultValues();
 
-        for (int i = 0; i < gameDataManager.GameDataSO.CurrentRolledOutCount; i++)
-        {
-            bool hintFlag = i < gameDataManager.GameDataSO.UptoHintCount;
+        carpetTree.CleanUp();
 
-            carpetTree.CarpetTreeController.RollOutNextImmediate(hintFlag, hintFlag);
-        }
-
-        carpetTree.OnFullyMatchedSolution += HandleCarpetTreeMatchedSolution;
-
-        carpetTree.TreeStateChanged += HandleTreeStateChanged;
-
-        UpdateHintNum();
+        GenerateScene();
 
         NewLevelLoaded?.Invoke(gameDataManager.GameDataSO.CurrentLevel);
     }
 
-    public void LoadNextLevel()
+    public void Init()
     {
         if (gameDataManager.IsLevelValid())
         {
+            GenerateScene();
 
-            carpetTree.CleanUp();
-
-            if (!GenerateScene())
+            for (int i = 0; i < gameDataManager.GameDataSO.CurrentRolledOutCount; i++)
             {
-                samplePainter.Paint(null);
+                bool hintFlag = i < gameDataManager.GameDataSO.RolledOutUptoHintCount;
+
+                carpetTree.CarpetTreeController.RollOutNextImmediate(hintFlag, hintFlag);
             }
 
-            UpdateHintNum();
+            carpetTree.OnFullyMatchedSolution += HandleCarpetTreeMatchedSolution;
+
+            carpetTree.TreeStateChanged += HandleTreeStateChanged;
 
             NewLevelLoaded?.Invoke(gameDataManager.GameDataSO.CurrentLevel);
         }
         else
         {
-            Debug.Log("Levels Clear");
+            AllLevelsClear?.Invoke();
+        }
+    }
+
+    public void LoadNextLevel()
+    {
+
+        if (gameDataManager.IsLevelValid())
+        {
+
+            carpetTree.CleanUp();
+
+            GenerateScene();
+
+            NewLevelLoaded?.Invoke(gameDataManager.GameDataSO.CurrentLevel);
+        }
+        else
+        {
+            AllLevelsClear?.Invoke();
         }
     }
 
     public void HandleCarpetTreeMatchedSolution()
     {
+        LevelCompleted?.Invoke(gameDataManager.GameDataSO.CurrentLevel);
+
         firework.Play();
 
-        gameDataManager.IncrementLevel();
+        SoundController.Current.PlayCorrectSound();
+        SoundController.Current.PlayPaperFireworkSound();
 
         gameDataManager.GameDataSO.ResetOnNextLevel();
+
+        gameDataManager.IncreaseLevel();
     }
+
     private void HandleEventFromFirework()
     {
-        //do some UI logics here before calling nextlevel();
-        LevelCompleted?.Invoke(gameDataManager.GameDataSO.CurrentLevel);
+        if (!CheckForFinalLevelInStage())
+        {
+            LoadNextLevel();
+
+            if (gameDataManager.GameDataSO.CurrentLevel % GlobalAccess.Current.ConstantsSO.LevelNumPerAd == 0)
+            {
+                ShouldWatchAdsOnLevelCompleted?.Invoke();
+            }
+        }
     }
 
-
-    public void ShowHint()
+    public void UseHint()
     {
-        var n = GlobalAccess.Current.ConstantsSO.MaxHint - gameDataManager.GameDataSO.UsedHintCount;
-        
-        n = Mathf.Clamp(n, 0, carpetTree.GetRemainingNodeCount());
+        if (useHintLock)
+        {
+            return;
+        }
+
+        var n = gameDataManager.GameDataSO.HintNum;
 
         if (n > 0)
         {
-            gameDataManager.IncreaseUsedHintCount();
+            HintNumChanged?.Invoke(gameDataManager.GameDataSO.HintNum - 1);
 
-            HintNumChanged?.Invoke(n--);
+            useHintLock = true;
 
-            carpetTree.CarpetTreeController.PerformHint();
+            carpetTree.CarpetTreeController.PerformHint(() =>
+            {
+
+                gameDataManager.DecreaseHintNum();
+
+                useHintLock = false;
+            });
 
         }
         else
         {
-
+            //watch ads
+            //ShouldWatchAdsOnHintButtonClicked?.Invoke();
         }
     }
 
     public void HandleTreeStateChanged(bool hintFlag)
     {
 
-        UpdateHintNum();
-
         if (hintFlag)
         {
-            gameDataManager.GameDataSO.UptoHintCount = carpetTree.CorrectNodeCount;
+            gameDataManager.GameDataSO.RolledOutUptoHintCount = carpetTree.CorrectNodeCount;
         }
 
         gameDataManager.GameDataSO.CurrentRolledOutCount = carpetTree.CorrectNodeCount;
     }
 
-    public void UpdateHintNum()
+
+    private bool CheckForFinalLevelInStage()
     {
+        if (CurrentLevelInStage == 0)
+        {
+            OnStageCompleted();
 
-        var n = GlobalAccess.Current.ConstantsSO.MaxHint - gameDataManager.GameDataSO.UsedHintCount;
+            return true;
+        }
+        return false;
+    }
+    private void OnStageCompleted()
+    {
+        gameDataManager.GameDataSO.HintNum = GlobalAccess.Current.ConstantsSO.DefaultHintNum;
 
-        n = Mathf.Clamp(n, 0, carpetTree.GetRemainingNodeCount());
+        StageCompleted?.Invoke();
+    }
 
-        HintNumChanged?.Invoke(n);
+    public void IncreaseHintNumOnRewarded()
+    {
+        gameDataManager.GameDataSO.HintNum += GlobalAccess.Current.ConstantsSO.DefaultHintNum;
     }
 }
 

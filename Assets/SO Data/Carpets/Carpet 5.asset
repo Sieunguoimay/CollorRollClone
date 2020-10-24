@@ -17,7 +17,7 @@ MonoBehaviour:
   - {x: -4, y: -2}
   - {x: -4, y: 2}
   - {x: 3, y: 2}
-  Color: {r: 0.19215685, g: 0.900478, b: 1, a: 1}
+  Color: {r: 1, g: 0.81946206, b: 0.2688679, a: 1}
   Position: {x: 0, y: 0}
   PoleOfInaccessibility: {x: -0.5, y: 0}
   PivotPoints:

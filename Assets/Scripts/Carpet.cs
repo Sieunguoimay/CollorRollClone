@@ -30,8 +30,8 @@ public class Carpet : MonoBehaviour
 {
     public class RefNode
     {
-        //public List<Node<RefNode>> parents;
         public int parentCount = 0;
+
         public CarpetSO carpetSO = null;
 
         public Node<Carpet> correctCarpet = null;
@@ -45,6 +45,7 @@ public class Carpet : MonoBehaviour
     }
 
     public int InGameIndex = -1;
+
     public int Level = 1;
 
     //Some quick access to other components to support the MainGame
@@ -92,7 +93,7 @@ public class Carpet : MonoBehaviour
     {
         if (this.node == node) return true;
 
-        bool collidedWithChildren = false;
+        var collidedWithChildren = false;
 
         foreach (var child in this.node.children)
         {
@@ -105,11 +106,12 @@ public class Carpet : MonoBehaviour
         if (!collidedWithChildren)
         {
             if (Utils.Instance.PolygonCollision(
-                this.carpetSO.Polygon, node.obj.carpetSO.Polygon,
-                this.carpetSO.Position, node.obj.carpetSO.Position,
-                this.carpetSO.PoleOfInaccessibility, node.obj.carpetSO.PoleOfInaccessibility))
+                carpetSO.Polygon, node.obj.carpetSO.Polygon,
+                carpetSO.Position, node.obj.carpetSO.Position,
+                carpetSO.PoleOfInaccessibility, node.obj.carpetSO.PoleOfInaccessibility))
             {
                 node.obj.parents.Add(new ParentNode() { node = this.node, IndexInParent = this.node.children.Count });
+
                 node.obj.Level += this.node.obj.Level;
 
                 this.node.AddChild(node);
@@ -130,7 +132,7 @@ public class Carpet : MonoBehaviour
     }
     public float GetCorrectHeight()
     {
-        return (refNode.obj.carpetSO.Order) * 0.001f + carpetMeshCreator.Thickness * 0.5f;
+        return (refNode.obj.carpetSO.Order) * 0.001f /*+ carpetMeshCreator.Thickness * 0.5f*/;
     }
 
     public void Unset()

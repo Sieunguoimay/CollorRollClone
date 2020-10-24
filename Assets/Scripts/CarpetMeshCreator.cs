@@ -3,7 +3,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Http.Headers;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif //UNITY_EDITOR
+
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -119,6 +123,7 @@ public class CarpetMeshCreator : MonoBehaviour
     }
 
 }
+#if UNITY_EDITOR
 
 //[CustomEditor(typeof(CarpetMeshCreator))]
 //[CanEditMultipleObjects]
@@ -253,3 +258,5 @@ public class CarpetMeshCreatorCE : Editor
 //{
 //    0,1,2,3,4,5
 //};
+
+#endif //UNITY_EDITOR

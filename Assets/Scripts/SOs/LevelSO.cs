@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif //UNITY_EDITOR
 using UnityEngine;
 
 public class LevelSO : ScriptableObject
@@ -9,6 +11,7 @@ public class LevelSO : ScriptableObject
     public List<CarpetSO> carpetSOs = new List<CarpetSO>();
     public Vector2 Position = new Vector2();
 }
+#if UNITY_EDITOR
 
 [CustomEditor(typeof(LevelSO))]
 [CanEditMultipleObjects]
@@ -88,9 +91,34 @@ public class LevelSOCE : Editor
             newCarpetSO.Order = levelSO.carpetSOs.Count;
             levelSO.carpetSOs.Add(newCarpetSO);
         }
+        if (GUILayout.Button("Triangle"))
+        {
+            var newCarpetSO = Utils.Instance.CreateAsset<CarpetSO>("Assets/SO Data/Carpets/Carpet.asset");
+            newCarpetSO.Order = levelSO.carpetSOs.Count;
+
+            newCarpetSO.Polygon.Add(new Vector2(-1,-1));
+            newCarpetSO.Polygon.Add(new Vector2(0,1));
+            newCarpetSO.Polygon.Add(new Vector2(1,-1));
+
+            levelSO.carpetSOs.Add(newCarpetSO);
+        }
+        if (GUILayout.Button("Rectangle"))
+        {
+            var newCarpetSO = Utils.Instance.CreateAsset<CarpetSO>("Assets/SO Data/Carpets/Carpet.asset");
+            newCarpetSO.Order = levelSO.carpetSOs.Count;
+
+            newCarpetSO.Polygon.Add(new Vector2(-1, -1));
+            newCarpetSO.Polygon.Add(new Vector2(-1, 1));
+            newCarpetSO.Polygon.Add(new Vector2(1, 1));
+            newCarpetSO.Polygon.Add(new Vector2(1, -1));
+
+            levelSO.carpetSOs.Add(newCarpetSO);
+        }
+
         EditorGUILayout.EndHorizontal();
 
         if(GUI.changed)
             EditorUtility.SetDirty(target);
     }
 }
+#endif //UNITY_EDITOR

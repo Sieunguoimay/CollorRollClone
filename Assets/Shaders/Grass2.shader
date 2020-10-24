@@ -15,7 +15,7 @@
 		_BladeHeight("Blade Height", Float) = 0.5
 		_BladeHeightRandom("Blade Height Random", Float) = 0.3
 
-		//_TessellationUniform("Tessellation Uniform", Range(1, 64)) = 1
+		_TessellationUniform("Tessellation Uniform", Range(1, 64)) = 1
 
 		_WindDistortionMap("Wind Distortion Map", 2D) = "white" {}
 		_WindFrequency("Wind Frequency", Vector) = (0.05, 0.05, 0, 0)
@@ -25,7 +25,7 @@
 		CGINCLUDE
 #include "UnityCG.cginc"
 #include "Autolight.cginc"
-//#include "CustomTessellation.cginc"
+#include "CustomTessellation.cginc"
 
 		float _Factor;
 		float4 _BottomColor;
@@ -44,20 +44,20 @@
 		float2 _WindFrequency;
 		float _WindStrength;
 
-		struct vertexInput {
-			float4 vertex : POSITION;
-			float3 normal : NORMAL;
-			float4 tangent : TANGENT;
-			float2 uv : TEXCOORD0;
-		};
+		//struct vertexInput {
+		//	float4 vertex : POSITION;
+		//	float3 normal : NORMAL;
+		//	float4 tangent : TANGENT;
+		//	float2 uv : TEXCOORD0;
+		//};
 
-		struct vertexOutput {
+		//struct vertexOutput {
 
-			float4 pos: SV_POSITION;
-			float3 normal: NORMAL;
-			float4 tangent : TANGENT;
-			float2 uv: TEXCOORD0;
-		};
+		//	float4 pos: SV_POSITION;
+		//	float3 normal: NORMAL;
+		//	float4 tangent : TANGENT;
+		//	float2 uv: TEXCOORD0;
+		//};
 
 		struct GeometryOutput {
 			float4 pos: SV_POSITION;
@@ -98,21 +98,21 @@
 			return geometryOutput;
 		}
 
-		vertexOutput vert(vertexInput i)
-		{
-			vertexOutput o;
+		//vertexOutput vert(vertexInput i)
+		//{
+		//	vertexOutput o;
 
-			o.pos = i.vertex;
-			o.normal = i.normal;
-			o.tangent = i.tangent;
-			//o.uv = i.uv;
+		//	o.pos = i.vertex;
+		//	o.normal = i.normal;
+		//	o.tangent = i.tangent;
+		//	//o.uv = i.uv;
 
-			return o;
-		}
+		//	return o;
+		//}
 
 		[maxvertexcount(12)]
 		void geo(triangle vertexOutput input[3], inout TriangleStream<GeometryOutput> triStream) {//float4 input[3]: SV_POSITION
-			float3 pos = input[0].pos;
+			float3 pos = input[0].vertex;
 
 			float3 vNormal = input[0].normal;
 			float4 vTangent = input[0].tangent;
@@ -163,6 +163,8 @@
 				#pragma vertex vert
 				#pragma fragment frag
 				#pragma geometry geo
+				#pragma hull hull
+				#pragma domain domain
 
 				#include "Lighting.cginc"
 

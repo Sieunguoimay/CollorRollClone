@@ -28,20 +28,13 @@ public class CarpetTree : MonoBehaviour
     public Bounds Bounds { private set; get; }
 
 
-    private void Start()
+    private void Awake()
     {
         CarpetTreeController = GetComponent<CarpetTreeController>();
-
-        transform.parent = transform;
     }
 
     public void GenerateTree(LevelSO levelSO)
     {
-
-        Vector3 origin = new Vector3(levelSO.Position.x, 0, levelSO.Position.y);
-
-        transform.localPosition = origin + new Vector3(0, transform.localPosition.y, 0);
-
         int n = levelSO.carpetSOs.Count;
 
         Carpets = new Carpet[n];
@@ -83,11 +76,17 @@ public class CarpetTree : MonoBehaviour
         }
         Bounds = new Bounds()
         {
-            center = new Vector3((left + right + levelSO.Position.x) / 2, 0, (top + bottom + levelSO.Position.y) / 2),
+            center = new Vector3((left + right) / 2, 0, (top + bottom) / 2),
             size = new Vector3((right - left), 0, (top - bottom))
         };
-        Carpet.DisplayRefTree(SolutionTree);
 
+        //Carpet.DisplayRefTree(SolutionTree);
+
+        CarpetTreeController.Reset();
+
+        Vector3 origin = /*new Vector3(levelSO.Position.x, 0, levelSO.Position.y)- */-Bounds.center;
+
+        transform.localPosition = origin + new Vector3(0, transform.localPosition.y, 0);
     }
 
     public void CleanUp()
@@ -100,6 +99,7 @@ public class CarpetTree : MonoBehaviour
         CarpetRollers = null;
 
         CorrectNodeCount = 0;
+
     }
 
     private void HandleBeforeRollIn(Carpet carpet)
@@ -141,8 +141,6 @@ public class CarpetTree : MonoBehaviour
             OnPuzzleSolved();
         }
 
-
-
         //CurrentTree.obj.DisplayTree();
 
         //Carpet.DisplayRefTree(SolutionTree);
@@ -162,6 +160,7 @@ public class CarpetTree : MonoBehaviour
                 CorrectNodeCount++;
             }
         }
+
         return CorrectNodeCount;
     }
 
@@ -177,6 +176,7 @@ public class CarpetTree : MonoBehaviour
 
     private void OnPuzzleSolved()
     {
+        CarpetTreeController.enabled = false;
 
         OnFullyMatchedSolution?.Invoke();
     }

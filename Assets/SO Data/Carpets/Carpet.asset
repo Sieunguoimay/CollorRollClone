@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: Carpet
   m_EditorClassIdentifier: 
   Polygon:
-  - {x: -1, y: -2}
-  - {x: -4, y: -2}
-  - {x: -4, y: 0}
-  - {x: -1, y: 0}
-  Color: {r: 0.86343455, g: 1, b: 0.16509432, a: 1}
+  - {x: -1, y: -1}
+  - {x: -1, y: -5}
+  - {x: -7, y: -5}
+  - {x: -7, y: -1}
+  Color: {r: 1, g: 0.4442018, b: 0.16470587, a: 1}
   Position: {x: 0, y: 0}
-  PoleOfInaccessibility: {x: -2.5, y: -1}
+  PoleOfInaccessibility: {x: -4, y: -3}
   PivotPoints:
-  - {x: -1, y: -2}
-  - {x: -4, y: -2}
-  Order: 1
+  - {x: -1, y: -1}
+  - {x: -1, y: -5}
+  Order: 2
   IsPivotClockwise: 1
   stickPivotToEdge: 1
   pivotPoint1: 0

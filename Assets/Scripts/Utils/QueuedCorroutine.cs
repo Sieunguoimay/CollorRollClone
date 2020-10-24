@@ -170,3 +170,27 @@ public class DelayAction
         yield return new WaitForSeconds(time);
     }
 }
+
+public class WaitForPredicateAction
+{
+    private WaitWhile waitWhile;
+
+    private readonly Action action;
+
+    public WaitForPredicateAction(MonoBehaviour mono,Func<bool> predicate, Action action)
+    {
+        this.action = action;
+
+        waitWhile = new WaitWhile(predicate);
+
+        mono.StartCoroutine(Enumerator());
+    }
+    IEnumerator Enumerator()
+    {
+        yield return waitWhile;
+
+        action?.Invoke();
+
+        yield return null;
+    }
+}

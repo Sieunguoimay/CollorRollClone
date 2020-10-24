@@ -5,23 +5,34 @@ using UnityEngine;
 public class CarpetMPBlock : MonoBehaviour
 {
     public MaterialPropertyBlock Block { get; private set; }
-    private MeshRenderer meshRenderer;
+
     private MeshFilter meshFilter;
 
-    public Material sharedMaterial;
+    public Material[] sharedMaterials;
 
-    // Start is called before the first frame update
     void Awake()
     {
-        meshRenderer = GetComponent<MeshRenderer>();
         meshFilter = GetComponent<MeshFilter>();
+
         Block = new MaterialPropertyBlock();
-        //meshRenderer.material = sharedMaterial;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        Graphics.DrawMesh(meshFilter.mesh, transform.position, transform.rotation, sharedMaterial, 0, null, 0, Block);
+        for(int i = 0; i<sharedMaterials.Length; i++)
+        {
+            Graphics.DrawMesh(meshFilter.mesh, transform.position, transform.rotation, sharedMaterials[i], 0, null, 0, Block);
+        }
     }
+
+    public float GetPitch()
+    {
+        return sharedMaterials[0].GetFloat("_Pitch");
+    }
+
+    public float GetAnglePerUnit()
+    {
+        return sharedMaterials[0].GetFloat("_AnglePerUnit");
+    }
+
 }

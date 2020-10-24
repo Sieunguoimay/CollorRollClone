@@ -308,8 +308,8 @@ public class ShapeGenerator
         List<Vector3> outputPolygon = new List<Vector3>();
         List<int> outputPolygonIndices = new List<int>();
 
-        leftMost = new Vector2(0, float.MaxValue);
-        rightMost = new Vector2(0, float.MinValue);
+        leftMost = new Vector2(float.MaxValue,0);
+        rightMost = new Vector2(float.MinValue,0);
         topMost = new Vector2(0, float.MinValue);
         bottomMost = new Vector2(0, float.MaxValue);
         
@@ -334,6 +334,7 @@ public class ShapeGenerator
             if (v1.x < leftMost.x) leftMost = v1;
             if (v2.x < leftMost.x) leftMost = v2;
             if (v3.x < leftMost.x) leftMost = v3;
+
             if (v1.x > rightMost.x) rightMost = v1;
             if (v2.x > rightMost.x) rightMost = v2;
             if (v3.x > rightMost.x) rightMost = v3;

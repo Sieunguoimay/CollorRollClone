@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif //UNITY_EDITOR
 using UnityEngine;
 
 public class Utils
@@ -67,6 +69,7 @@ public class Utils
         float cross = dp.x * dl.y - dp.y * dl.x;
         return (Mathf.Abs(cross) <= 0.00001f);
     }
+#if UNITY_EDITOR
 
     public T CreateAsset<T>(string path) where T : ScriptableObject
     {
@@ -82,11 +85,13 @@ public class Utils
 
         return asset;
     }
+
     public void DeleteScriptableObject(ScriptableObject o)
     {
         AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(o));
         ScriptableObject.DestroyImmediate(o);
     }
+#endif //UNITY_EDITOR
 
     public float LeftOrRight(Vector2 a, Vector2 b)
     {
@@ -236,6 +241,16 @@ public class Utils
 
         };
 
+    }
+
+    public Vector3 Limit(Vector3 vector, float maxLength)
+    {
+        float length = vector.magnitude;
+        if (length > maxLength)
+        {
+            vector = vector.normalized * maxLength;
+        }
+        return vector;
     }
 }
 

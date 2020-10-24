@@ -10,21 +10,30 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] Text mainText;
     [SerializeField] Button okButton;
 
-    Action Done = delegate { };
+
+    private Animator animator;
+
+    private int animationHashCode_Show;
+    private int animationHashCode_Hide;
+
+    public Action Done = delegate { };
+
+    public Action PlayButtonClicked = delegate { };
 
     private void Awake()
     {
-        mainGame.LevelCompleted += HandleLevelCompleted;
-
-        Done += mainGame.LoadNextLevel;
-
         Hide();
+
+        animator = GetComponent<Animator>();
+
+        animationHashCode_Show = Animator.StringToHash("show");
+        animationHashCode_Hide = Animator.StringToHash("hide");
     }
 
 
-    private void HandleLevelCompleted(int level)
+    public void HandleLevelCompleted()
     {
-        mainText.text = $"Level {level+1} Completed!";
+        mainText.text = "SPECIAL LEVEL\nUNLOCKED!";
 
         Show();
     }
@@ -32,11 +41,28 @@ public class LevelCompleteUI : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
+
+        animator.SetTrigger(animationHashCode_Show);
     }
 
     public void Hide()
     {
-        gameObject.SetActive(false);
+        if (animator != null)
+        {
+            animator.SetTrigger(animationHashCode_Hide);
+
+            float t = animator.GetCurrentAnimatorClipInfo(0)[0].clip.length;
+
+            new DelayAction(this, () => {
+
+                gameObject.SetActive(false);
+
+            }, t);
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     public void HandleOkButtonClicked()
@@ -44,5 +70,14 @@ public class LevelCompleteUI : MonoBehaviour
         Hide();
 
         Done?.Invoke();
+    }
+
+    public void HandlePlayButtonClicked()
+    {
+        Hide();
+
+        Done?.Invoke();
+
+        PlayButtonClicked?.Invoke();
     }
 }

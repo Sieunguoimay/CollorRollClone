@@ -1,18 +1,41 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif //UNITY_EDITOR
+
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
 public class GameEditor : MonoBehaviour
 {
+    [SerializeField] private GameDataSO GameDataSO;
+    
     public LevelSO levelSO;
+    
+
     public void CreateNewLevelSO()
     {
+
+#if UNITY_EDITOR
         levelSO = Utils.Instance.CreateAsset<LevelSO>("Assets/SO Data/Levels/Level.asset");
+
+        var newArray = new LevelSO[GameDataSO.levelSOs.Length + 1];
+
+        GameDataSO.levelSOs.CopyTo(newArray, 0);
+
+        newArray[GameDataSO.levelSOs.Length] = levelSO;
+
+        GameDataSO.levelSOs = newArray;
+
+#endif //UNITY_EDITOR
+
     }
 
 }
+#if UNITY_EDITOR
+
 [CustomEditor(typeof(GameEditor))]
 [CanEditMultipleObjects]
 public class GameEditorCE : Editor
@@ -36,7 +59,7 @@ public class GameEditorCE : Editor
         levelSOCE?.OnInspectorGUI();
 
         EditorGUILayout.BeginVertical();
-        if (GUILayout.Button("New Level Scriptable Object"))
+        if (GUILayout.Button("New Level"))
         {
             gameEditor.CreateNewLevelSO();
         }
@@ -67,7 +90,7 @@ public class GameEditorCE : Editor
                 if (carpetSO.show)
                 {
                     float size = HandleUtility.GetHandleSize(p) * 0.3f;
-                    var snap = Vector3.one;
+                    var snap = Vector3.one*0.5f;
                     var handlePositionInWorldSpace = Handles.FreeMoveHandle(p, Quaternion.identity, size, snap, Handles.SphereHandleCap);
                     var newPos = gameEditor.transform.InverseTransformPoint(handlePositionInWorldSpace) - origin;
                     carpetSO.Polygon[j] = new Vector2(newPos.x, newPos.z);
@@ -89,8 +112,10 @@ public class GameEditorCE : Editor
             Vector3 pivot2 = gameEditor.transform.TransformPoint(origin + new Vector3(pivotPoints[1].x, 0, pivotPoints[1].y));
             if (!carpetSO.stickPivotToEdge)
             {
-                Vector3 worldSpacePivot1 = Handles.FreeMoveHandle(pivot1, Quaternion.identity, 0.5f, Vector3.one, Handles.SphereHandleCap);
-                Vector3 worldSpacePivot2 = Handles.FreeMoveHandle(pivot2, Quaternion.identity, 0.5f, Vector3.one, Handles.SphereHandleCap);
+                float size = HandleUtility.GetHandleSize(pivot1) * 0.3f;
+                var snap = Vector3.one * 0.5f;
+                Vector3 worldSpacePivot1 = Handles.FreeMoveHandle(pivot1, Quaternion.identity, size, snap, Handles.SphereHandleCap);
+                Vector3 worldSpacePivot2 = Handles.FreeMoveHandle(pivot2, Quaternion.identity, size, snap, Handles.SphereHandleCap);
                 var pivot13D = gameEditor.transform.InverseTransformPoint(worldSpacePivot1) - origin;
                 var pivot23D = gameEditor.transform.InverseTransformPoint(worldSpacePivot2) - origin;
                 pivotPoints[0] = new Vector2(pivot13D.x, pivot13D.z);
@@ -110,3 +135,4 @@ public class GameEditorCE : Editor
 
     }
 }
+#endif //UNITY_EDITOR
